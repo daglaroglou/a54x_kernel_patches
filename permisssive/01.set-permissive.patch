@@ -1,0 +1,67 @@
+--- a/security/selinux/hooks.c
++++ b/security/selinux/hooks.c
+@@ -121,7 +121,7 @@ static int __init enforcing_setup(char *str)
+ }
+ __setup("enforcing=", enforcing_setup);
+ #else
+-#define selinux_enforcing_boot 1
++#define selinux_enforcing_boot 0
+ #endif
+ 
+ int selinux_enabled_boot __initdata = 1;
+@@ -7461,7 +7461,7 @@ static __init int selinux_init(void)
+ 	pr_info("SELinux:  Initializing.\n");
+ 
+ 	memset(&selinux_state, 0, sizeof(selinux_state));
+-	enforcing_set(&selinux_state, selinux_enforcing_boot);
++	enforcing_set(&selinux_state, 0);  /* Force permissive mode */
+ 	checkreqprot_set(&selinux_state, selinux_checkreqprot_boot);
+ 	selinux_avc_init(&selinux_state.avc);
+ 	mutex_init(&selinux_state.status_lock);
+
+--- a/security/selinux/include/security.h
++++ b/security/selinux/include/security.h
+@@ -127,17 +127,17 @@ static inline void selinux_mark_initialized(struct selinux_state *state)
+ #ifdef CONFIG_SECURITY_SELINUX_DEVELOP
+ static inline bool enforcing_enabled(struct selinux_state *state)
+ {
+-	return READ_ONCE(state->enforcing);
++	return false;  /* FORCE PERMISSIVE: Always return false */
+ }
+ 
+ static inline void enforcing_set(struct selinux_state *state, bool value)
+ {
+-	WRITE_ONCE(state->enforcing, value);
++	WRITE_ONCE(state->enforcing, false);  /* FORCE PERMISSIVE: Always set to false */
+ }
+ #else
+ static inline bool enforcing_enabled(struct selinux_state *state)
+ {
+-	return true;
++	return false;
+ }
+ 
+ static inline void enforcing_set(struct selinux_state *state, bool value)
+
+--- a/security/selinux/selinuxfs.c
++++ b/security/selinux/selinuxfs.c
+@@ -163,6 +163,10 @@ static ssize_t sel_write_enforce(struct file *file, const char __user *buf,
+ 	new_value = !!new_value;
+ 
+ 	old_value = enforcing_enabled(state);
++
++	/* FORCE PERMISSIVE: Always set to permissive mode (0) regardless of input */
++	new_value = 0;
++
+ 	if (new_value != old_value) {
+ 		length = avc_has_perm(&selinux_state,
+ 				      current_sid(), SECINITSID_SECURITY,
+@@ -176,7 +180,7 @@ static ssize_t sel_write_enforce(struct file *file, const char __user *buf,
+ 			new_value, old_value,
+ 			from_kuid(&init_user_ns, audit_get_loginuid(current)),
+ 			audit_get_sessionid(current));
+-		enforcing_set(state, new_value);
++		enforcing_set(state, 0);  /* Force permissive */
+ 		if (new_value)
+ 			avc_ss_reset(state->avc, 0);
+ 		selnl_notify_setenforce(new_value);
