@@ -1,0 +1,45 @@
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -32,6 +32,9 @@
+ #include <linux/fs_context.h>
+ #include <linux/shmem_fs.h>
+ #include <linux/mnt_idmapping.h>
++#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
++#include <linux/susfs_def.h>
++#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+ #include <linux/delay.h>
+ #include <linux/fslog.h>
+ #ifdef CONFIG_KDP_NS
+ #include <linux/kdp.h>
+ #endif
+@@ -41,6 +44,13 @@
+ #include "pnode.h"
+ #include "internal.h"
+ 
++#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
++extern bool susfs_is_current_ksu_domain(void);
++extern bool susfs_is_boot_completed_triggered __read_mostly;
++
++static DEFINE_IDA(susfs_ksu_mnt_group_ida);
++static atomic64_t susfs_ksu_mounts = ATOMIC64_INIT(0);
++
++#define CL_COPY_MNT_NS BIT(25) /* used by copy_mnt_ns() */
++#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
++
+ /* Maximum number of mounts in a mount namespace */
+ unsigned int sysctl_mount_max __read_mostly = 100000;
+ 
+ /* @fs.sec -- c4d165e8cb5ea1cc14cdedb9eab23efd642d4d5f -- */
+ 
+@@ -4075,6 +4085,9 @@
+ 	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
+ 	if (user_ns != ns->user_ns)
+ 		copy_flags |= CL_SHARED_TO_SLAVE;
++#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
++	copy_flags |= CL_COPY_MNT_NS;
++#endif
+ #ifdef CONFIG_KDP_NS
+ 	new = copy_tree(old, ((struct kdp_mount *)old)->mnt->mnt_root, copy_flags);
+ #else
+ 	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
+ #endif
