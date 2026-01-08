@@ -1,0 +1,8 @@
+--- a/kernel/apk_sign.c
++++ b/kernel/apk_sign.c
+@@ -361,5 +361,5 @@ bool is_manager_apk(char *path)
+ #endif
+ 	return check_v2_signature(path, EXPECTED_MANAGER_SIZE, EXPECTED_MANAGER_HASH)
+-	|| check_v2_signature(path, 0x3e6, "79e590113c4c4c0c222978e413a5faa801666957b1212a328e46c00c69821bf7"); //KernelSU-Next
++	|| check_v2_signature(path, 0x39b, "593d4ce870c02468639efeef631e07ca4d852d63f154be56706229f9a5be0800"); //Wild_KSU
+ }
