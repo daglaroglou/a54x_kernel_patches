@@ -1,39 +1,37 @@
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
-@@ -32,6 +32,9 @@
- #include <linux/fs_context.h>
- #include <linux/shmem_fs.h>
- #include <linux/mnt_idmapping.h>
+@@ -37,10 +37,24 @@
+ #ifdef CONFIG_KDP_NS
+ #include <linux/kdp.h>
+ #endif
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +#include <linux/susfs_def.h>
 +#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
- #include <linux/delay.h>
- #include <linux/fslog.h>
- #ifdef CONFIG_KDP_NS
-@@ -41,6 +44,16 @@
+ 
  #include "pnode.h"
  #include "internal.h"
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +extern bool susfs_is_current_ksu_domain(void);
-+extern bool susfs_is_boot_completed_triggered __read_mostly;
-+
-+static DEFINE_IDA(susfs_ksu_mnt_group_ida);
-+static atomic64_t susfs_ksu_mounts = ATOMIC64_INIT(0);
++extern bool susfs_is_sdcard_android_data_decrypted __read_mostly;
 +
 +#define CL_COPY_MNT_NS BIT(25) /* used by copy_mnt_ns() */
++
++static DEFINE_IDA(susfs_mnt_id_ida);
++static DEFINE_IDA(susfs_mnt_group_ida);
++
 +#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +
  /* Maximum number of mounts in a mount namespace */
  unsigned int sysctl_mount_max __read_mostly = 100000;
  
-@@ -4075,6 +4088,9 @@
+@@ -4074,6 +4088,9 @@
  	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
  	if (user_ns != ns->user_ns)
  		copy_flags |= CL_SHARED_TO_SLAVE;
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 +	copy_flags |= CL_COPY_MNT_NS;
-+#endif
++#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
  #ifdef CONFIG_KDP_NS
  	new = copy_tree(old, ((struct kdp_mount *)old)->mnt->mnt_root, copy_flags);
  #else
