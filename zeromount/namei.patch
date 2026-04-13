@@ -1,0 +1,13 @@
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -43,6 +43,10 @@
+ #include "internal.h"
+ #include "mount.h"
+ 
++#ifdef CONFIG_ZEROMOUNT
++#include <linux/zeromount.h>
++#endif
++
+ /* [Feb-1997 T. Schoebel-Theuer]
+  * Fundamental changes in the pathname lookup mechanisms (namei)
+  * were necessary because of omirr.  The reason is that omirr needs
