@@ -1,0 +1,19 @@
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -248,6 +248,16 @@
+ 		      AT_STATX_SYNC_TYPE))
+ 		return -EINVAL;
+ 
++#ifdef CONFIG_ZEROMOUNT
++	/* Try ZeroMount hook for relative paths */
++	if (filename) {
++		int zm_ret = zeromount_stat_hook(dfd, filename, stat, request_mask, flags);
++
++		if (zm_ret != -ENOENT)
++			return zm_ret;
++	}
++#endif
++
+ 	if (!(flags & AT_SYMLINK_NOFOLLOW))
+ 		lookup_flags |= LOOKUP_FOLLOW;
+ 	if (!(flags & AT_NO_AUTOMOUNT))
