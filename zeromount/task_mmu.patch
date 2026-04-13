@@ -1,0 +1,22 @@
+--- a/fs/proc/task_mmu.c
++++ b/fs/proc/task_mmu.c
+@@ -21,6 +21,9 @@
+ #include <linux/shmem_fs.h>
+ #include <linux/uaccess.h>
+ #include <linux/pkeys.h>
++#ifdef CONFIG_ZEROMOUNT
++#include <linux/zeromount.h>
++#endif
+ 
+ #include <asm/elf.h>
+ #include <asm/tlb.h>
+@@ -286,6 +289,9 @@
+ 		dev = inode->i_sb->s_dev;
+ 		ino = inode->i_ino;
+ 		pgoff = ((loff_t)vma->vm_pgoff) << PAGE_SHIFT;
++#ifdef CONFIG_ZEROMOUNT
++		zeromount_spoof_mmap_metadata(inode, &dev, &ino);
++#endif
+ 	}
+ 
+ 	start = vma->vm_start;
